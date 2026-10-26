@@ -1,0 +1,34 @@
+# Read-only research task: cheapest flight per day with a free carry-on, from Google Flights.
+# Fill in the route below before running. Nothing is booked, bought or submitted.
+goal: >
+  On Google Flights, for every day of the target month, find the cheapest one-way fare that
+  includes a free carry-on bag, and report a table of date, price, airline, departure time,
+  duration and stops.
+route:
+  origin: "SFO" # <- change: airport code or city
+  destination: "LAX" # <- change
+  month: "December 2026" # <- change; airlines publish fares about 11 months out
+  trip: one-way # one-way | round-trip (round-trip needs a return date rule)
+  passengers: 1
+  cabin: economy
+allowed_sites: [google.com] # flights.google.com redirects to google.com/travel/flights
+allowed_apps: [Google Chrome, Dia, Safari]
+ask: ""
+may_share: [] # nothing personal is needed for a price search
+must_pause_for:
+  - any sign-in prompt
+  - any 'Book', 'Continue', 'Select', checkout or payment step
+  - any request for a name, email, phone number or payment details
+never_share:
+  [
+    password,
+    SSN,
+    full card number,
+    one-time codes,
+    security answers,
+    email address,
+    phone number,
+  ]
+autonomy: approve_each_send # there should be nothing to send; a commit prompt means stop and look
+tone: n/a
+site_check: strict

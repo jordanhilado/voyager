@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__voyager__cu_open",
+      "mcp__voyager__cu_bind",
+      "mcp__voyager__cu_run_plan",
+      "mcp__voyager__cu_wait_until",
+      "mcp__voyager__cu_read",
+      "mcp__voyager__cu_observe",
+      "mcp__voyager__cu_stop"
+    ],
+    "ask": ["mcp__voyager__cu_commit"]
+  }
+}

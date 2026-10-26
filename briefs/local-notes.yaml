@@ -1,0 +1,10 @@
+# A brief for driving a native app (no browser, no URL): write a note in Apple Notes.
+goal: Create a new note and type a short message in Apple Notes
+allowed_sites: []
+allowed_apps: [Notes]
+ask: ""
+may_share: []
+must_pause_for: []
+never_share: [password, SSN, full card number, one-time codes]
+autonomy: approve_each_send
+site_check: lenient

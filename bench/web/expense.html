@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Expenses · Northwind Ops</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .inbox button.msg { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:9px 6px; background:none; }
+  .inbox button.msg[aria-pressed=true] { background:#eaf0fd; }
+  .inbox .from { font-weight:600; } .inbox .date { float:right; color:var(--muted); font-size:12px; }
+  .reader { margin-top:14px; padding:12px; background:#fafbfc; border:1px solid var(--line); border-radius:6px; min-height:120px; white-space:pre-wrap; }
+  td input[type=text] { width:100%; }
+</style></head>
+<body data-task="expense">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">Expenses</span></header>
+<main id="app"><h1>New expense claim</h1><div class="cols"><section class="card inbox" aria-label="Inbox"><h2>Inbox</h2><div id="list"></div><article id="reader" class="reader" aria-label="Message">Select a message to read it.</article></section>
+<section class="card" aria-label="Expense claim form"><h2>Claim details</h2><div id="form"></div></section></div></main>
+<div id="notice" role="status" hidden></div>
+<script src="/static/app.js"></script>
+<script>
+(async () => {
+  const { seed } = await api('data');
+  const list = document.getElementById('list'), reader = document.getElementById('reader');
+  seed.emails.forEach((m) => {
+    const b = h('button', { class: 'msg', 'aria-pressed': 'false', onclick: () => {
+      list.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      reader.replaceChildren(h('div', { class: 'muted' }, `From: ${m.from} · ${m.date}`), h('h2', {}, m.subject), h('p', {}, m.body));
+    } }, h('span', { class: 'date' }, m.date), h('div', { class: 'from' }, m.from), h('div', {}, m.subject));
+    list.append(b);
+  });
+  const trip = h('input', { type: 'text', placeholder: 'e.g. NYC-SALES-Sep' });
+  const rows = [1, 2, 3, 4].map((n) => ({
+    date: h('input', { type: 'text', placeholder: 'YYYY-MM-DD', 'aria-label': `Line ${n} date` }),
+    category: select([['', '— Category —'], ...seed.categories], '', { 'aria-label': `Line ${n} category` }),
+    amount: h('input', { type: 'text', placeholder: '0.00', 'aria-label': `Line ${n} amount` }),
+    merchant: h('input', { type: 'text', placeholder: 'Merchant', 'aria-label': `Line ${n} merchant` }),
+  }));
+  const table = h('table', {}, h('thead', {}, h('tr', {}, ['#', 'Date', 'Category', 'Amount (USD)', 'Merchant'].map((t) => h('th', {}, t)))),
+    h('tbody', {}, rows.map((r, i) => h('tr', {}, h('td', {}, String(i + 1)), h('td', {}, r.date), h('td', {}, r.category), h('td', {}, r.amount), h('td', {}, r.merchant)))));
+  const submit = h('button', { class: 'primary', onclick: async () => {
+    await api('submit', { trip: trip.value, lines: rows.map((r) => ({ date: r.date.value, category: r.category.value, amount: r.amount.value, merchant: r.merchant.value })) });
+    notice('Claim submitted to Finance for approval.');
+  } }, 'Submit claim');
+  document.getElementById('form').append(field('Trip name', trip), h('p', { class: 'muted' }, 'Leave unused lines empty.'), table, h('div', { class: 'actions' }, submit));
+})();
+</script></body></html>

@@ -1,0 +1,13 @@
+# Low-stakes example brief: ask a store's support chat about shipping.
+goal: Ask the store's support chat how long standard shipping takes to the US
+allowed_sites: []            # fill in the store's domain, e.g. [example-store.com]
+allowed_apps: [Google Chrome, Dia, Safari]
+ask: How long does standard shipping take to the US, and is there a tracking option?
+may_share:
+  - that I am a prospective customer in the US
+must_pause_for:
+  - any request for an email address, phone number or order number
+never_share: [password, SSN, full card number, one-time codes, security answers, email address]
+autonomy: approve_each_send
+tone: polite, concise, first person
+site_check: lenient

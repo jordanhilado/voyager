@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Receipt · Harbor &amp; Vine</title>
+<link rel="stylesheet" href="/static/app.css">
+<style> .receipt { max-width:380px; margin:20px auto; background:#fff; padding:22px; font:14px/1.6 ui-monospace, Menlo, monospace; border:1px solid var(--line); }
+  .receipt .r { display:flex; justify-content:space-between; } .receipt hr { border:0; border-top:1px dashed #999; } .c { text-align:center; } </style></head>
+<body data-task="receipt">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">Receipts</span></header>
+<main id="app"><article class="receipt" id="receipt" aria-label="Receipt"></article></main>
+<script src="/static/app.js"></script>
+<script>
+(async () => {
+  const { seed: s } = await api('data');
+  const line = (a, b) => h('div', { class: 'r' }, h('span', {}, a), h('span', {}, b));
+  document.getElementById('receipt').append(
+    h('div', { class: 'c' }, h('strong', {}, s.venue)), h('div', { class: 'c' }, `${s.date} · Table ${s.table} · Server ${s.server} · Guests ${s.guests}`), h('hr'),
+    ...s.items.map(([n, p]) => line(n, money(p))), h('hr'),
+    line('Subtotal', money(s.subtotal)), line(s.tax_label, money(s.tax)), h('hr'), line('TOTAL', money(s.total)),
+    h('hr'), h('div', { class: 'c' }, 'Gratuity not included. Thank you!'));
+})();
+</script></body></html>

@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Support · Northwind Ops</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .layout { display:grid; grid-template-columns: 1fr 330px; gap:20px; align-items:start; }
+  .ticket { border:1px solid var(--line); border-radius:6px; padding:10px 12px; margin-bottom:10px; background:#fff; }
+  .ticket .meta { color:var(--muted); font-size:12px; } .policy li { margin:4px 0; }
+</style></head>
+<body data-task="triage">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">Support</span></header>
+<main id="app"><h1>Open tickets · needs triage</h1><div class="layout"><section aria-label="Tickets" id="tickets"></section>
+<aside class="card policy" aria-label="Routing policy"><h2>Routing policy</h2><div id="policy"></div></aside></div>
+<div class="actions"><button class="primary" id="save">Save triage</button></div></main>
+<div id="notice" role="status" hidden></div>
+<script src="/static/app.js"></script>
+<script>
+(async () => {
+  const { seed } = await api('data');
+  document.getElementById('policy').append(...seed.policy.map((l) => /:$/.test(l) ? h('h3', {}, l) : h('p', {}, l)));
+  const rows = seed.tickets.map((t) => {
+    const team = select([['', '— Team —'], ...seed.teams], '', { 'aria-label': `${t.id} team` });
+    const pri = select([['', '— Priority —'], ...seed.priorities], '', { 'aria-label': `${t.id} priority` });
+    document.getElementById('tickets').append(h('article', { class: 'ticket', 'aria-label': t.id },
+      h('div', { class: 'meta' }, `${t.id} · ${t.customer}`), h('strong', {}, t.subject), h('p', {}, t.body),
+      h('div', { class: 'row' }, field('Team', team), field('Priority', pri))));
+    return { t, team, pri };
+  });
+  document.getElementById('save').onclick = async () => {
+    await api('submit', { tickets: rows.map((r) => ({ id: r.t.id, team: r.team.value, priority: r.pri.value })) });
+    notice('Triage saved.');
+  };
+})();
+</script></body></html>

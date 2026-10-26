@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Contacts · Northwind Ops</title>
+<link rel="stylesheet" href="/static/app.css">
+<style> .pager { display:flex; gap:6px; align-items:center; margin-top:12px; } .pager button[aria-current=page] { background:#e3eafb; font-weight:600; } </style></head>
+<body data-task="crm">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">CRM</span></header>
+<main id="app"><h1>Contacts <span id="count" class="pill"></span></h1><section class="card" aria-label="Contact list"><div id="table"></div><nav class="pager" id="pager" aria-label="Pagination"></nav></section></main>
+<dialog id="confirm" aria-label="Confirm delete"><p id="confirm-text"></p><div class="actions"><button id="cancel">Cancel</button><button id="really" class="danger">Delete contact</button></div></dialog>
+<div id="notice" role="status" hidden></div>
+<script src="/static/app.js"></script>
+<script>
+const PER = 8;
+let contacts = [], page = 1, pending = null;
+const dlg = document.getElementById('confirm');
+document.getElementById('cancel').onclick = () => { pending = null; dlg.close(); };
+document.getElementById('really').onclick = async () => {
+  const c = pending; dlg.close(); pending = null;
+  if (!c) return;
+  await api('action', { op: 'delete', id: c.id });
+  notice(`Deleted ${c.name}.`);
+  await load();
+};
+async function load() {
+  contacts = (await api('data')).state.contacts.slice().sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  const pages = Math.max(1, Math.ceil(contacts.length / PER));
+  page = Math.min(page, pages);
+  document.getElementById('count').textContent = `${contacts.length} contacts`;
+  const rows = contacts.slice((page - 1) * PER, page * PER).map((c) => h('tr', {},
+    h('td', {}, c.name), h('td', {}, c.email), h('td', {}, c.company), h('td', {}, c.last_activity),
+    h('td', {}, h('button', { 'aria-label': `Delete ${c.name} (${c.email})`, onclick: () => {
+      pending = c; document.getElementById('confirm-text').textContent = `Delete contact ${c.name} (${c.email})? This cannot be undone.`; dlg.showModal();
+    } }, 'Delete'))));
+  document.getElementById('table').replaceChildren(h('table', {}, h('thead', {}, h('tr', {}, ['Name', 'Email', 'Company', 'Last activity', ''].map((t) => h('th', {}, t)))), h('tbody', {}, rows)));
+  const pager = document.getElementById('pager');
+  pager.replaceChildren(
+    h('button', { disabled: page === 1, onclick: () => { page--; load(); } }, '‹ Previous'),
+    ...Array.from({ length: pages }, (_, i) => h('button', { 'aria-current': i + 1 === page ? 'page' : false, 'aria-label': `Page ${i + 1}`, onclick: () => { page = i + 1; load(); } }, String(i + 1))),
+    h('button', { disabled: page === pages, onclick: () => { page++; load(); } }, 'Next ›'),
+    h('span', { class: 'muted' }, `Page ${page} of ${pages}`));
+}
+load();
+</script></body></html>

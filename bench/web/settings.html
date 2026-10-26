@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Admin · Northwind Ops</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .layout { display:grid; grid-template-columns: 200px 1fr; gap:20px; align-items:start; }
+  [role=tablist] { display:flex; flex-direction:column; gap:4px; }
+  [role=tab] { text-align:left; border:0; background:none; padding:8px 10px; }
+  [role=tab][aria-selected=true] { background:#e3eafb; font-weight:600; }
+  .opt { display:flex; gap:8px; align-items:center; margin:6px 0; }
+  .footer { position:sticky; bottom:0; background:var(--bg); padding:12px 0; }
+</style></head>
+<body data-task="settings">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">Admin console</span></header>
+<main id="app"><h1>Workspace settings</h1><div class="layout"><nav class="card" aria-label="Settings sections"><div role="tablist" id="tabs"></div></nav>
+<div><div id="panels"></div><div class="footer actions" id="footer"></div></div></div></main>
+<div id="notice" role="status" hidden></div>
+<script src="/static/app.js"></script>
+<script>
+(async () => {
+  const { seed } = await api('data');
+  const s = { ...seed.initial };
+  const check = (key, label) => { const c = h('input', { type: 'checkbox', id: uid('c'), checked: s[key] }); c.addEventListener('change', () => { s[key] = c.checked; }); return h('div', { class: 'opt' }, c, h('label', { for: c.id }, label)); };
+  const radios = (key, opts) => h('fieldset', { class: 'field' }, h('legend', {}, 'Require two-factor authentication'), opts.map(([v, l]) => {
+    const r = h('input', { type: 'radio', name: key, value: v, id: uid('r'), checked: s[key] === v });
+    r.addEventListener('change', () => { s[key] = v; });
+    return h('div', { class: 'opt' }, r, h('label', { for: r.id }, l));
+  }));
+  const org = h('input', { type: 'text', value: s.org_name }); org.addEventListener('input', () => { s.org_name = org.value; });
+  const minpw = h('input', { type: 'number', min: '6', max: '64', value: s.min_password }); minpw.addEventListener('input', () => { s.min_password = Number(minpw.value); });
+  const timeout = select([['15m', '15 minutes'], ['30m', '30 minutes'], ['1h', '1 hour'], ['8h', '8 hours']], s.timeout);
+  timeout.addEventListener('change', () => { s.timeout = timeout.value; });
+  const timeoutField = field('Idle timeout', timeout); timeoutField.hidden = !s.enforce_timeout;
+  const enforce = check('enforce_timeout', 'Enforce idle session timeout');
+  enforce.querySelector('input').addEventListener('change', (e) => { timeoutField.hidden = !e.target.checked; });
+  const expiry = select([['never', 'Never'], ['1d', '1 day'], ['7d', '7 days'], ['30d', '30 days']], s.link_expiry);
+  expiry.addEventListener('change', () => { s.link_expiry = expiry.value; });
+  const panels = {
+    General: [h('h2', {}, 'General'), field('Organization name', org), field('Workspace URL', h('input', { type: 'text', value: 'northwind.ops.example', readonly: true }))],
+    Security: [h('h2', {}, 'Security'), field('Minimum password length', minpw), radios('twofa', [['off', 'Off'], ['admins', 'Admins only'], ['everyone', 'Everyone']]), enforce, timeoutField],
+    Sharing: [h('h2', {}, 'Sharing'), check('public_links', 'Allow public links'), field('Default link expiry', expiry)],
+    Notifications: [h('h2', {}, 'Notifications'), check('weekly_digest', 'Weekly digest email'), check('security_alerts', 'Security alerts'), check('product_updates', 'Product updates')],
+  };
+  const tabs = document.getElementById('tabs'), host = document.getElementById('panels');
+  Object.entries(panels).forEach(([name, kids], i) => {
+    const panel = h('section', { class: 'card', role: 'tabpanel', 'aria-label': name, hidden: i !== 0 }, kids);
+    const tab = h('button', { role: 'tab', 'aria-selected': String(i === 0), onclick: () => {
+      tabs.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', 'false'));
+      host.querySelectorAll('[role=tabpanel]').forEach((p) => { p.hidden = true; });
+      tab.setAttribute('aria-selected', 'true'); panel.hidden = false;
+    } }, name);
+    tabs.append(tab); host.append(panel);
+  });
+  document.getElementById('footer').append(h('button', { class: 'primary', onclick: async () => {
+    await api('submit', { ...s }); notice('Settings saved.');
+  } }, 'Save changes'), h('button', { onclick: () => location.reload() }, 'Discard'));
+})();
+</script></body></html>

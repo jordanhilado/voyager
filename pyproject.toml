@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voyager-cu"
+version = "0.1.0"
+description = "Fast, safe computer use: Claude plans, Jev (TypeSafe System One) verifies, native macOS accessibility acts."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Jordan Hilado" }]
+keywords = ["computer-use", "mcp", "claude", "jev", "typesafe", "automation"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+]
+dependencies = [
+  "mcp>=2.0",
+  "httpx[http2]>=0.27",
+  "pillow>=10",
+  "pyyaml>=6",
+  "pydantic>=2",
+  "anthropic>=0.40",
+  "pyobjc-framework-ApplicationServices>=10; sys_platform == 'darwin'",
+  "pyobjc-framework-Quartz>=10; sys_platform == 'darwin'",
+  "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
+  "pyobjc-framework-ScreenCaptureKit>=10; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+hotkey = ["pynput>=1.7"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+voyager = "voyager.cli:main"
+jevd = "voyager.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

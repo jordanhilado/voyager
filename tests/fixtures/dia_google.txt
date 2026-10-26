@@ -1,0 +1,90 @@
+Window: "Google", App: Dia.
+0 standard window Google, ID: bigBrowserWindow_B6E4C9AB-C4EC-4579-BC32-9D592DE76BED, Secondary Actions: Raise
+	1 scroll area
+		2 HTML content Google, URL: google.com/webhp?hl=en&sa=X&ved=example
+			3 container
+				4 container
+					5 link About, Value: about.google/?fg=1&utm_source=google-US&utm_medium=referral&utm_campaign=hp-header
+					6 link Store, Value: store.google.com/US?utm_source=hp_header&utm_medium=google_ooo&utm_campaign=GS100042&hl=en-US
+					7 link Gmail , Value: mail.google.com/mail/u/0/&ogbl
+					8 link Search for Images , Value: google.com/imghp?hl=en&authuser=0&ogbl
+					9 button Google apps
+					10 pop up button Google Account: Jane Doe (jane.doe@example.com), Google membership
+				11 image Google
+				12 container
+					13 container
+						14 pop up button Add files, tools, and select a model
+						15 text entry area (settable) Search
+						16 button Search by voice
+						17 button Search by image
+						18 link AI Mode
+							19 text AI Mode
+					20 container
+						21 button Google Search
+						22 button I'm Feeling Lucky
+				23 container
+					24 link Advertising, Value: google.com/intl/en_us/ads/?subid=ww-ww-et-g-awa-a-g_hpafoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpafooter&fg=1
+					25 link Business, Value: google.com/services/?subid=ww-ww-et-g-awa-a-g_hpbfoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpbfooter&fg=1
+					26 link How Search works, Value: google.com/search/howsearchworks/?fg=1
+					27 link Build, create, and do more with AI tools from Google, Value: ai.google/helpful-tools/?utm_source=googlehpfooter&utm_medium=housepromos&utm_campaign=bottom-footer
+					28 link Privacy, Value: policies.google.com/privacy?hl=en&fg=1
+					29 link Terms, Value: policies.google.com/terms?hl=en&fg=1
+					30 pop up button Settings
+						31 text Settings
+	32 container navigationBar
+		33 unknown navigationBarBackButton
+		34 unknown navigationBarReloadOrStopLoadingButton
+		35 button
+		36 collection
+		37 unknown navigationBarAssistantBar
+			38 unknown
+				39 scroll area
+					40 text entry area Value: google.com / Google, ID: navigationBarAssistantBarTextField
+	41 collection
+	42 scroll area Secondary Actions: Scroll Up, Scroll Down
+		43 collection (disabled)
+			44 unknown Example Domain, ID: tab
+				45 unknown
+					46 image
+					47 text Example Domain
+			48 unknown Endpoints — Cloud & Agent | ngrok, ID: tab
+				49 unknown
+					50 image
+					51 text Endpoints — Cloud & Agent | ngrok
+			52 unknown Feed, ID: tab
+				53 unknown
+					54 image
+					55 text Feed
+			56 unknown T3 Code, ID: tab
+				57 unknown
+					58 image
+					59 text T3 Code
+			60 unknown explorer synonym, ID: tab
+				61 unknown
+					62 image
+					63 text explorer synonym
+			64 unknown Google, ID: tab
+				65 unknown
+					66 image
+					67 text Google
+			68 unknown
+				69 button
+		70 scroll bar (disabled, settable, float) 0
+	71 close button
+	72 minimize button
+	73 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	74 button
+	75 button
+76 menu bar
+	77 Dia
+	78 File
+	79 Edit
+	80 View
+	81 Tabs
+	82 Bookmarks
+	83 History
+	84 Extensions
+	85 Window
+	86 Help
+
+The focused UI element is 15 text entry area (settable) Search

@@ -1,0 +1,9 @@
+Window: "Sign in", App: Google Chrome.
+0 standard window Sign in, ID: win1
+	1 scroll area
+		2 HTML content Sign in, URL: accounts.example.com/login
+			3 container
+				4 text entry area (settable) Email
+				5 secure text entry area (settable) Password
+				6 text entry area (settable) Verification code
+				7 button Sign in

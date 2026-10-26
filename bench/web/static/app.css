@@ -1,0 +1,29 @@
+:root { --ink:#1d2330; --muted:#5f6b7a; --line:#d9dee5; --bg:#f5f7fa; --card:#fff; --accent:#2457d6; --danger:#c0352b; --ok:#1e7a46; }
+* { box-sizing: border-box; }
+body { margin:0; font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+.bar { display:flex; gap:16px; align-items:center; padding:10px 20px; background:#14213d; color:#fff; }
+.bar .logo { font-weight:700; letter-spacing:.2px; }
+.bar .app { opacity:.85; }
+main { padding:20px; max-width:1240px; margin:0 auto; }
+h1 { font-size:20px; margin:0 0 14px; }
+h2 { font-size:16px; margin:0 0 10px; }
+.cols { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; }
+.muted { color:var(--muted); }
+table { border-collapse:collapse; width:100%; }
+th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+th { font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
+input[type=text], input[type=number], select { font:inherit; padding:5px 7px; border:1px solid #b9c1cc; border-radius:5px; background:#fff; min-width:0; }
+input[type=text] { width:100%; }
+button { font:inherit; padding:6px 12px; border-radius:5px; border:1px solid #b9c1cc; background:#fff; cursor:pointer; }
+button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+button.danger { background:var(--danger); color:#fff; border-color:var(--danger); }
+.field { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.field > label { font-weight:600; font-size:13px; }
+.row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.notice { position:fixed; right:20px; bottom:20px; padding:10px 14px; border-radius:6px; color:#fff; background:var(--ok); max-width:420px; }
+.notice.err { background:var(--danger); }
+.actions { margin-top:14px; display:flex; gap:10px; }
+.pill { display:inline-block; padding:1px 8px; border-radius:10px; background:#e8edf6; font-size:12px; }
+dialog { border:1px solid var(--line); border-radius:8px; padding:18px; max-width:420px; }
+dialog::backdrop { background:rgba(20,30,50,.35); }

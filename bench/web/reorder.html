@@ -1,0 +1,51 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Supplies · Northwind Ops</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .layout { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start; }
+  td.num { font-variant-numeric:tabular-nums; } td input[type=number] { width:64px; }
+  .err { color:var(--danger); min-height:20px; }
+</style></head>
+<body data-task="reorder">
+<header class="bar"><span class="logo">Northwind Ops</span><span class="app">Supplies</span></header>
+<main id="app"><h1>Reorder supplies</h1><div class="layout">
+<section class="card" aria-label="Catalog"><h2>Catalog</h2><p class="muted">Sorted by: recently ordered first</p><div id="catalog"></div></section>
+<section class="card" aria-label="Draft order"><h2>Draft order</h2><p class="err" id="err" role="alert"></p><div id="order"></div>
+<div class="actions"><button class="primary" id="submit">Submit order</button></div></section></div></main>
+<dialog id="popup" aria-label="Shipping notice"><h2>Shipping notice</h2>
+<p>Cables 2 m and longer ship separately from our Reno warehouse and may arrive a day later.</p>
+<div class="actions"><button id="gotit" class="primary">Got it</button></div></dialog>
+<div id="notice" role="status" hidden></div>
+<script src="/static/app.js"></script>
+<script>
+let catalog = [], st = { order: {}, recent: [] };
+const name = (sku) => catalog.find((c) => c.sku === sku).name;
+async function act(body) {
+  const r = await api('action', body);
+  st = r;
+  document.getElementById('err').textContent = r.ok ? '' : (r.error || '');
+  render();
+  return r;
+}
+function render() {
+  const rank = (sku) => { const i = st.recent.indexOf(sku); return i < 0 ? 1000 + catalog.findIndex((c) => c.sku === sku) : i; };
+  const rows = catalog.slice().sort((a, b) => rank(a.sku) - rank(b.sku)).map((c) => h('tr', {},
+    h('td', {}, c.name), h('td', {}, c.sku), h('td', { class: 'num' }, money(c.price)),
+    h('td', {}, h('button', { onclick: () => act({ op: 'add', sku: c.sku }) }, 'Add'))));
+  document.getElementById('catalog').replaceChildren(h('table', {}, h('thead', {}, h('tr', {}, ['Item', 'SKU', 'Price', ''].map((t) => h('th', {}, t)))), h('tbody', {}, rows)));
+  const skus = Object.keys(st.order);
+  document.getElementById('order').replaceChildren(skus.length ? h('table', {}, h('thead', {}, h('tr', {}, ['Item', 'Qty', ''].map((t) => h('th', {}, t)))),
+    h('tbody', {}, skus.map((sku) => {
+      const q = h('input', { type: 'number', min: '0', value: st.order[sku], 'aria-label': 'Quantity' });
+      q.addEventListener('change', () => act({ op: 'qty', sku, qty: Number(q.value) }));
+      return h('tr', {}, h('td', {}, `${name(sku)} (${sku})`), h('td', {}, q), h('td', {}, h('button', { onclick: () => act({ op: 'remove', sku }) }, 'Remove')));
+    }))) : h('p', { class: 'muted' }, 'The order is empty.'));
+  const dlg = document.getElementById('popup');
+  if (st.popup && !dlg.open) dlg.showModal();
+  if (!st.popup && dlg.open) dlg.close();
+  if (st.submitted) notice('Order submitted.');
+}
+document.getElementById('gotit').onclick = () => act({ op: 'dismiss' });
+document.getElementById('popup').addEventListener('cancel', (e) => { e.preventDefault(); act({ op: 'dismiss' }); });
+document.getElementById('submit').onclick = () => act({ op: 'submit' });
+(async () => { catalog = (await api('data')).seed.catalog; await act({ op: 'get' }); })();
+</script></body></html>

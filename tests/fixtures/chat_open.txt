@@ -1,0 +1,11 @@
+Window: "Support - Example Store", App: Google Chrome.
+0 standard window Support - Example Store, ID: win1
+	1 scroll area
+		2 HTML content Support - Example Store, URL: example-store.com/support
+			3 container
+				4 heading Help Center
+				5 link Shipping policy, Value: example-store.com/shipping
+				6 button Chat with us
+				7 text Our agents are available 9am to 5pm.
+	8 container navigationBar
+		9 text entry area Value: example-store.com/support, ID: navigationBarAssistantBarTextField
