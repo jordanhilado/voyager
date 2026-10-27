@@ -1,0 +1,20 @@
+name: branch name
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the PR branch follows CONTRIBUTING.md
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|test|docs|ci|chore)/[a-z0-9]+(-[a-z0-9]+){1,4}$'
+          if [[ ${#BRANCH} -gt 50 || ! "$BRANCH" =~ $pattern ]]; then
+            echo "::error::Branch '$BRANCH' does not follow <type>/<short-description> (see CONTRIBUTING.md)."
+            exit 1
+          fi
+          echo "Branch '$BRANCH' is fine."
