@@ -18,6 +18,8 @@ def cmd_serve(args) -> None:
     s = load_settings()
     if args.port:
         s.port = args.port
+    if sys.stderr is None:  # pythonw (the Windows logon task): no console, so log to the daemon log
+        sys.stdout = sys.stderr = s.log_path.open("a", encoding="utf-8", buffering=1)
     serve(s, transport=args.transport)
 
 
@@ -98,7 +100,27 @@ def cmd_doctor(args) -> None:
     except Exception:
         row("hotkey (pynput)", True, "not installed; optional (pip install voyager-cu[hotkey])")
     row("allowed apps", True, ", ".join(s.allowed_apps))
-    if IS_MAC:
+    from .config import IS_WINDOWS
+    from .launch import installed_browsers
+
+    browsers = installed_browsers()
+    allowed_browsers = [b for b in browsers if b in s.allowed_apps]
+    row("browser", bool(allowed_browsers), ", ".join(allowed_browsers) if allowed_browsers else
+        f"no allowed browser installed (installed: {', '.join(browsers) or 'none'}; allowed: {', '.join(s.allowed_apps)})")
+    if IS_WINDOWS:
+        try:
+            from .backend.winnative import native_available
+
+            good, why = native_available()
+        except Exception as e:  # noqa: BLE001
+            good, why = False, f"comtypes/pywin32 unavailable ({e}); reinstall with install.ps1"
+        h = _health(s)
+        if not good and h and h.get("ok") and h.get("platform") == "windows":
+            # This shell has no desktop (session 0), but the daemon runs in one: that is what matters.
+            good, why = True, "the running daemon drives your desktop (this shell itself has none)"
+        row("UI Automation", good, "native backend ready" if why == "" else why)
+        row("screenshots", True, "native (PrintWindow); no permission needed")
+    elif IS_MAC:
         try:
             from .backend.macnative import native_available
             from .backend.macwin import screen_recording_granted
@@ -112,7 +134,7 @@ def cmd_doctor(args) -> None:
             "grant Screen Recording to the app that starts the daemon (System Settings > Privacy & Security > "
             "Screen & System Audio Recording); without it Voyager runs text-only")
     else:
-        row("platform", False, "Voyager currently runs on macOS only; Windows support is pending")
+        row("platform", False, "Voyager runs on macOS and Windows")
     print("\nall good" if ok else "\nfix the items marked !! and run again")
 
 
@@ -135,7 +157,14 @@ def cmd_up(args) -> None:
     if h and h.get("ok"):
         print(json.dumps({"status": "running", **h}))
         return
-    log = s.log_path.open("a")
+    if sys.platform == "win32":
+        from .backend.winwin import interactive_session
+
+        if not interactive_session():
+            sys.exit("this shell runs in session 0 (a service or sandbox) with no desktop, so a daemon started here "
+                     "cannot see or drive any window. Start it from a terminal in your Windows session (voyager up) "
+                     "or install the logon task (install.ps1 -Login).")
+    log = s.log_path.open("a", encoding="utf-8")
     kwargs = {"stdout": log, "stderr": log, "stdin": subprocess.DEVNULL, "cwd": str(s.data_dir)}
     if sys.platform == "win32":
         kwargs["creationflags"] = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
@@ -153,18 +182,15 @@ def cmd_up(args) -> None:
 
 
 def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-        return True
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
+    from .proc import pid_alive
+
+    return pid_alive(pid)
 
 
 def cmd_down(args) -> None:
-    """Stop the background jevd: SIGTERM, wait up to --timeout seconds, then SIGKILL. Clears the lock."""
-    import signal
+    """Stop the background jevd: SIGTERM, wait up to --timeout seconds, then SIGKILL. Clears the lock.
+    On Windows the process is terminated at once (no graceful signal reaches a detached process)."""
+    from .proc import terminate
 
     s = load_settings()
     if not s.lock_path.exists():
@@ -175,12 +201,12 @@ def cmd_down(args) -> None:
         s.lock_path.unlink(missing_ok=True); print("stale lock removed"); return
     if not _alive(pid):
         s.lock_path.unlink(missing_ok=True); print(f"stale lock (pid {pid} gone) removed"); return
-    os.kill(pid, signal.SIGTERM)
+    terminate(pid)
     deadline = time.time() + float(args.timeout)
     while time.time() < deadline and _alive(pid):
         time.sleep(0.2)
     if _alive(pid):
-        os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
+        terminate(pid, force=True)
         time.sleep(0.5)
         print(f"jevd pid {pid} killed after {args.timeout}s")
     else:
@@ -243,6 +269,11 @@ def cmd_health(args) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    if sys.platform == "win32":
+        # Piped output defaults to the ANSI code page there; page text (and the daemon's log) is UTF-8.
+        for stream in (sys.stdout, sys.stderr):
+            if hasattr(stream, "reconfigure"):
+                stream.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser(prog="voyager", description="Fast, safe computer use: Claude plans, Jev verifies, the daemon acts.")
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="cmd", required=True)

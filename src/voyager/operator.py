@@ -99,8 +99,8 @@ class Operator:
         if not targets:
             raise PolicyViolation("the backend reports no apps or windows")
         chosen = _match_target(target, targets)
-        if chosen is None and getattr(self.backend, "platform", "") in ("mac", "unknown"):
-            # macOS launches/binds apps by display name; try the literal name before asking the eyes.
+        if chosen is None and getattr(self.backend, "platform", "") in ("mac", "windows", "unknown"):
+            # The native backends launch/bind apps by display name; try the literal name before asking the eyes.
             name = re.sub(r"^(the\s+)?|(\s+(app|application|window))$", "", target.strip(), flags=re.I).strip()
             if name and len(name) <= 40:
                 try:
@@ -183,7 +183,7 @@ class Operator:
             raise PolicyViolation("no supported browser found; set VOYAGER_BROWSER")
         self.policy.check_app(app)
         if app not in self.settings.allowed_apps:
-            raise PolicyViolation(f"browser {app!r} is not in the daemon's allowed_apps; add it to ~/.voyager/config.yaml")
+            raise PolicyViolation(f"browser {app!r} is not in the daemon's allowed_apps; add it to {self.settings.data_dir / 'config.yaml'}")
         self.runlog.event("open", url=url, browser=app)
         await asyncio.to_thread(open_url, url, app)
         target = TargetInfo("app", app, app=app)

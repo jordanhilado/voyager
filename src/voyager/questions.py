@@ -29,7 +29,7 @@ class Thresholds:
     def load(cls, path: Path | None) -> "Thresholds":
         t = cls()
         if path and path.exists():
-            data = yaml.safe_load(path.read_text()) or {}
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             for k, v in data.items():
                 if hasattr(t, k):
                     setattr(t, k, float(v))

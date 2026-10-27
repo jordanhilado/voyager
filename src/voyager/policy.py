@@ -154,13 +154,9 @@ class DriverLock:
 
 
 def _pid_alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
+    from .proc import pid_alive
+
+    return pid_alive(pid)
 
 
 class Policy:

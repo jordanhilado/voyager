@@ -1,38 +1,54 @@
 # Voyager
 
-Fast, safe computer use on your Mac. Claude plans a whole batch of steps at once, a small local daemon carries them out through macOS accessibility and checks each one, and safety rules in code pause before anything is sent.
+Fast, safe computer use on your Mac or Windows PC. Claude plans a whole batch of steps at once, a small local daemon carries them out through the operating system's accessibility layer and checks each one, and safety rules in code pause before anything is sent.
 
 ```
 Claude Code (planner)  →  voyager daemon (127.0.0.1:8765)  →  your app window
                               ├─ eyes: Jev (TypeSafe) verifies each step
                               └─ backend: macOS accessibility + ScreenCaptureKit
+                                          Windows UI Automation + PrintWindow
 ```
-
-macOS only for now. Windows is not implemented yet.
 
 ## Setup
 
-You need macOS, Python 3.11+ and [Claude Code](https://claude.com/claude-code).
+You need Python 3.11+ and [Claude Code](https://claude.com/claude-code) on macOS or Windows 10/11.
 
 1. **Install**
+
+   macOS:
 
    ```bash
    git clone https://github.com/jordanhilado/voyager && cd voyager
    ./install.sh
    ```
 
-   This installs the `voyager` command, the `/voyager` skill and the MCP server for Claude Code.
+   Windows (PowerShell):
 
-2. **Add your keys** to `~/.voyager/config.yaml` (see [Configuration](#configuration)):
+   ```powershell
+   git clone https://github.com/jordanhilado/voyager; cd voyager
+   powershell -NoProfile -File install.ps1 -Login
+   ```
+
+   This installs the `voyager` command, the `/voyager` skill and the MCP server for Claude Code. On Windows,
+   `-Login` adds a logon task that keeps the daemon running in your desktop session (recommended; leave it
+   out to start the daemon yourself with `voyager up`). If script execution is disabled, add
+   `-ExecutionPolicy Bypass` before `-File`. No Python yet? `winget install Python.Python.3.12`.
+
+2. **Add your keys** to the config file, `~/.voyager/config.yaml` on macOS or `%LOCALAPPDATA%\voyager\config.yaml`
+   on Windows (see [Configuration](#configuration)):
 
    ```yaml
    typesafe_api_key: <your key>     # required
    anthropic_api_key: <your key>    # optional, recommended
    ```
 
-3. **Grant permissions** to your terminal (or whichever app runs Claude Code) in System Settings > Privacy & Security, then restart it:
-   - **Accessibility**: required.
-   - **Screen & System Audio Recording**: optional; without it Voyager can't take screenshots.
+3. **Permissions**
+   - macOS: grant your terminal (or whichever app runs Claude Code) **Accessibility** (required) and
+     **Screen & System Audio Recording** (optional; without it Voyager can't take screenshots) in System
+     Settings > Privacy & Security, then restart it.
+   - Windows: none. The daemon must run in your desktop session, not as a service: start it from a normal
+     terminal or with the logon task. Voyager cannot drive apps running as administrator unless it runs
+     elevated too.
 
 4. **Check it:** `voyager doctor`
 
@@ -46,7 +62,7 @@ Voyager opens the site, does the work and reports back. It asks for your approva
 
 ## Configuration
 
-Set these as environment variables or in `~/.voyager/config.yaml` (lowercase, without the `VOYAGER_` prefix, e.g. `allowed_apps: Google Chrome, Calculator`).
+Set these as environment variables or in the config file (lowercase, without the `VOYAGER_` prefix, e.g. `allowed_apps: Google Chrome, Calculator`).
 
 | Variable | Required? | Purpose |
 |---|---|---|
@@ -63,7 +79,7 @@ Set these as environment variables or in `~/.voyager/config.yaml` (lowercase, wi
 - **Hard limits in code:** app and site allowlists, never types into password fields, refuses card numbers, SSNs and one-time codes.
 - **Stop anytime** with `voyager stop`.
 
-Screen text from the controlled window goes to TypeSafe (and to Anthropic only if a Jev call fails). Run logs stay local in `~/.voyager/runs/`.
+Screen text from the controlled window goes to TypeSafe (and to Anthropic only if a Jev call fails). Run logs stay local in `runs/` under the data directory (`~/.voyager` on macOS, `%LOCALAPPDATA%\voyager` on Windows).
 
 ## Commands
 
@@ -75,13 +91,24 @@ Screen text from the controlled window goes to TypeSafe (and to Anthropic only i
 | `voyager tail -f` | Watch a run live |
 | `voyager run "<goal>"` | Run without Claude Code (needs `ANTHROPIC_API_KEY`) |
 
+## Windows notes
+
+- Reads and actions go through UI Automation patterns (Invoke, Toggle, Value, Scroll), so most steps work on a
+  background window without moving the pointer. Typing, keys and pointer clicks bring the window to the
+  foreground first, because Windows delivers synthesized input only there; the pointer goes back where it was.
+- Key chords use xdotool names; `cmd+…` means Ctrl, so plans written with macOS shortcuts behave the same.
+  `super`/`win` is the Windows key.
+- Screenshots use `PrintWindow`, which works for covered windows but not minimized ones.
+- `python scripts/e2e_windows.py --local` runs an offline smoke test against a small test window
+  (`scripts/win_fixture.py`); `python scripts/e2e_calculator.py` drives Windows Calculator.
+
 ## Development
 
 ```bash
 pip install -e ".[dev]" && pytest -q
 ```
 
-Benchmark against Cua Driver: [`bench/`](bench/README.md) (results in [`bench/RESULTS.md`](bench/RESULTS.md)).
+Benchmark against Cua Driver (macOS): [`bench/`](bench/README.md) (results in [`bench/RESULTS.md`](bench/RESULTS.md)).
 
 ## License
 

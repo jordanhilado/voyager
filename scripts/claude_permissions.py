@@ -8,13 +8,14 @@ from pathlib import Path
 
 ALLOW = ["mcp__voyager__cu_open", "mcp__voyager__cu_bind", "mcp__voyager__cu_run_plan", "mcp__voyager__cu_wait_until",
          "mcp__voyager__cu_read", "mcp__voyager__cu_observe", "mcp__voyager__cu_stop",
-         "Bash(voyager up)", "Bash(voyager up:*)", "Bash(voyager call:*)", "Bash(~/.voyager/venv/bin/voyager up:*)"]
+         "Bash(voyager up)", "Bash(voyager up:*)", "Bash(voyager call:*)", "Bash(~/.voyager/venv/bin/voyager up:*)",
+         'Bash("$LOCALAPPDATA/voyager/venv/Scripts/voyager.exe" up:*)']
 ASK = ["mcp__voyager__cu_commit"]
 
 
 def main() -> None:
     path = Path.home() / ".claude" / "settings.json"
-    data = json.loads(path.read_text()) if path.exists() else {}
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     perms = data.setdefault("permissions", {})
     changed = False
     for key, items in (("allow", ALLOW), ("ask", ASK)):
@@ -27,7 +28,7 @@ def main() -> None:
         if path.exists():
             shutil.copy(path, path.with_suffix(f".json.bak-{int(time.time())}"))
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2) + "\n")
+        path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print("changed" if changed else "already up to date")
 
 

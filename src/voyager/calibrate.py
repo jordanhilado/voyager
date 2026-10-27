@@ -63,6 +63,6 @@ def propose(samples: list[tuple[float, int, bool]], current: Thresholds, max_wro
 def run(runs_dir: Path, out_path: Path, current: Thresholds) -> tuple[Thresholds, dict]:
     samples = collect(runs_dir)
     t, report = propose(samples, current)
-    out_path.write_text(yaml.safe_dump(t.dump(), sort_keys=False))
+    out_path.write_text(yaml.safe_dump(t.dump(), sort_keys=False), encoding="utf-8")
     report["written"] = str(out_path)
     return t, report
