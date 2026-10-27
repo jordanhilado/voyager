@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "voyager-cu"
 version = "0.1.0"
-description = "Fast, safe computer use: Claude plans, Jev (TypeSafe System One) verifies, native macOS accessibility acts."
+description = "Fast, safe computer use: Claude plans, Jev (TypeSafe System One) verifies, native accessibility (macOS AX, Windows UI Automation) acts."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -15,6 +15,8 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows :: Windows 10",
+  "Operating System :: Microsoft :: Windows :: Windows 11",
 ]
 dependencies = [
   "mcp>=2.0",
@@ -27,6 +29,8 @@ dependencies = [
   "pyobjc-framework-Quartz>=10; sys_platform == 'darwin'",
   "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
   "pyobjc-framework-ScreenCaptureKit>=10; sys_platform == 'darwin'",
+  "comtypes>=1.4; sys_platform == 'win32'",
+  "pywin32>=306; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

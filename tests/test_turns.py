@@ -42,6 +42,28 @@ async def test_find_scrolls_until_found_then_clicks(tmp_path):
     assert res.pending_commit["typed_text"] == "Hello!"
 
 
+class MispickEyes(LocalEyes):
+    """Picks the first option with high confidence when no option shows the quoted words."""
+
+    async def _ask(self, state, questions, images):
+        out = await super()._ask(state, questions, images)
+        for qid, q in questions.items():
+            if q["type"] == "choice" and qid.startswith("pick") and out[qid]["choice"] == "none":
+                first = next(k for k in q["criteria"] if k != "none")
+                out[qid] = {"type": "choice", "choice": first, "confidence": 0.95, "probabilities": {first: 0.95, "none": 0.05}}
+        return out
+
+
+async def test_find_keeps_scrolling_past_a_pick_that_does_not_show_the_target(tmp_path):
+    pages = {"p1": chats(["Alice", "Bob", "Carol"]), "p2": chats(["Dave", "Dad", "Erin"]), "chat": CHAT}
+    be = FakeBackend(pages, "p1", {("p1", "scroll:down"): "p2", ("p2", "click:Dad"): "chat"})
+    pipe, policy, _ = make_pipeline(tmp_path, MispickEyes(), be)
+    plan = Plan(steps=[{"do": "find", "target": "the chat named 'Dad'", "in": "the chats list", "expect": "a 'Message Dad' box is shown"}])
+    res = await pipe.run_plan(plan, policy, Brief(name="t"))
+    assert res.status == "done", res.reason
+    assert be.actions[:2] == ["scroll:down", "click:Dad"]
+
+
 async def test_find_reports_end_of_list(tmp_path):
     be = FakeBackend({"p1": chats(["Alice", "Bob"])}, "p1", {})
     pipe, policy, _ = make_pipeline(tmp_path, LocalEyes(), be)

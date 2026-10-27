@@ -1,8 +1,10 @@
-"""Live end-to-end smoke run on macOS, using the Operator directly.
+"""Live end-to-end smoke run on macOS or Windows, using the Operator directly.
 
-Drives macOS Calculator: AC, 2, +, 3, = and checks the display reads 5 (checked in code, not by the
+Drives Calculator: clear, 2, +, 3, = and checks the display reads 5 (checked in code, not by the
 eyes). Harmless and stateless. Usage:
     VOYAGER_ALLOWED_APPS=Calculator python scripts/e2e_calculator.py
+On Windows (PowerShell): $env:VOYAGER_ALLOWED_APPS="Calculator"; python scripts/e2e_calculator.py
+Pass --local to use the offline heuristic eyes instead of Jev (no API key; for smoke runs only).
 """
 from __future__ import annotations
 
@@ -12,14 +14,37 @@ import logging
 import sys
 import time
 
-from voyager.config import load_settings
+from voyager.config import IS_WINDOWS, load_settings
 from voyager.operator import Operator
 
 logging.basicConfig(level="INFO", format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
+# Button labels differ: macOS Calculator says "All Clear" / "Add", Windows Calculator "Clear" / "Plus" / "Two".
+if IS_WINDOWS:
+    STEPS = [("the 'Clear' button", "the display shows '0'"), ("the 'Two' button", "the display shows '2'"),
+             ("the 'Plus' button", "the expression shows 2 +"), ("the 'Three' button", "the display shows '3'"),
+             ("the 'Equals' button", "the display shows '5'")]
+else:
+    STEPS = [("the 'All Clear' button", "the display shows '0'"), ("the '2' button", "the display shows '2'"),
+             ("the 'Add' button", "the display shows 2 followed by a plus sign"), ("the '3' button", "the display shows the expression 2+3"),
+             ("the 'Equals' button", "the display shows '5'")]
+
+
+def display_of(tree) -> str:
+    if IS_WINDOWS:  # Text "Display is 5" with AutomationId CalculatorResults
+        el = next((e for e in tree.elements if e.id == "CalculatorResults"), None)
+        return (el.name.rsplit(" ", 1)[-1] if el and el.name else "").strip()
+    el = next((e for e in tree.elements if e.role == "text" and e.parent is not None and tree.get(e.parent).id == "StandardInputView"), None)
+    return ((el.name if el else "") or "").replace("‎", "").strip()
+
 
 async def main() -> int:
-    op = Operator(load_settings())
+    eyes = None
+    if "--local" in sys.argv:
+        from voyager.eyes.local import LocalEyes
+
+        eyes = LocalEyes()
+    op = Operator(load_settings(), eyes=eyes)
     t0 = time.perf_counter()
     await op.start()
     print(f"started in {(time.perf_counter() - t0) * 1000:.0f} ms; eyes={op.eyes.name}")
@@ -27,13 +52,7 @@ async def main() -> int:
         b = await op.bind("the Calculator app")
         print("bind:", json.dumps(b))
         plan = {
-            "steps": [
-                {"do": "click", "target": "the 'All Clear' button", "expect": "the display shows '0'"},
-                {"do": "click", "target": "the '2' button", "expect": "the display shows '2'"},
-                {"do": "click", "target": "the 'Add' button", "expect": "the display shows 2 followed by a plus sign"},
-                {"do": "click", "target": "the '3' button", "expect": "the display shows the expression 2+3"},
-                {"do": "click", "target": "the 'Equals' button", "expect": "the display shows '5'"},
-            ],
+            "steps": [{"do": "click", "target": t, "expect": x} for t, x in STEPS],
             "stop_if": ["the app shows an 'error' dialog"],
         }
         t1 = time.perf_counter()
@@ -41,8 +60,7 @@ async def main() -> int:
         plan_ms = (time.perf_counter() - t1) * 1000
         print("plan result:", json.dumps({k: v for k, v in r.items() if k not in ("page_text", "eyes")}, indent=1, default=str)[:3000])
         obs = await op.backend.observe_ax()
-        display = next((e.name for e in obs.tree.elements if e.role == "text" and e.parent is not None and obs.tree.get(e.parent).id == "StandardInputView"), None)
-        display = (display or "").replace("‎", "").strip()
+        display = display_of(obs.tree)
         print(f"display reads: {display!r}   plan took {plan_ms:.0f} ms for {r.get('steps_completed')} steps")
         for st in r["timings"]["steps"]:
             print("  step", st["step"], st["do"], {k: st[k] for k in ("ground_ms", "act_ms", "settle_ms", "eyes_ms", "total_ms", "rung", "speculation_hit")})

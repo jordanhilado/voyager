@@ -1,6 +1,7 @@
 """Settings: environment variables, an optional YAML file, and platform defaults.
 
-Precedence: environment variable > ``~/.voyager/config.yaml`` > default.
+Precedence: environment variable > ``<data dir>/config.yaml`` > default. The data dir is ``~/.voyager``
+on macOS and ``%LOCALAPPDATA%/voyager`` on Windows (``VOYAGER_DATA_DIR`` overrides both).
 """
 from __future__ import annotations
 
@@ -121,7 +122,7 @@ def load_settings(config_path: Path | None = None) -> Settings:
     s = Settings()
     path = config_path or Path(os.environ.get("VOYAGER_CONFIG", default_data_dir() / "config.yaml"))
     if path.exists():
-        data = yaml.safe_load(path.read_text()) or {}
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         for f in fields(s):
             if f.name in data:
                 setattr(s, f.name, _coerce(f.name, data[f.name], getattr(s, f.name)))

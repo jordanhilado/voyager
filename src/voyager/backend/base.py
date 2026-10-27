@@ -1,7 +1,7 @@
 """Backend interface: everything the pipeline needs from the desktop layer.
 
-``MacNativeBackend`` implements it over macOS accessibility. A Windows UI Automation backend
-can implement the same interface without touching the pipeline.
+``MacNativeBackend`` implements it over macOS accessibility and ``WinNativeBackend`` over Windows
+UI Automation; the pipeline does not know which one it drives.
 """
 from __future__ import annotations
 

@@ -13,11 +13,13 @@ verifies every step and enforces hard safety rules. You never click directly.
 Run with Bash:
 
 ```bash
-voyager up || ~/.voyager/venv/bin/voyager up
+voyager up || ~/.voyager/venv/bin/voyager up || "$LOCALAPPDATA/voyager/venv/Scripts/voyager.exe" up
 ```
 
 It prints `{"status": "running"|"started", ...}` within a few seconds. If it fails, show the user
-the error and the log path it names, then stop.
+the error and the log path it names, then stop. On Windows, a log line about "session 0" means the
+shell has no desktop: ask the user to start the daemon from their own terminal (`voyager up`) or to
+install the logon task (`install.ps1 -Login`).
 
 ## Step 1: pick the tool transport
 

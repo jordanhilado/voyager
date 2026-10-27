@@ -9,11 +9,34 @@ from pathlib import Path
 from .config import IS_MAC, IS_WINDOWS
 
 MAC_BROWSERS = ["Google Chrome", "Dia", "Safari", "Microsoft Edge", "Arc", "Brave Browser", "Firefox"]
+_LOCAL = os.environ.get("LOCALAPPDATA", "")
 WIN_BROWSERS = {
-    "Google Chrome": [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"],
+    "Google Chrome": [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                      os.path.join(_LOCAL, r"Google\Chrome\Application\chrome.exe")],
     "Microsoft Edge": [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"],
-    "Firefox": [r"C:\Program Files\Mozilla Firefox\firefox.exe"],
+    "Brave Browser": [r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+                      os.path.join(_LOCAL, r"BraveSoftware\Brave-Browser\Application\brave.exe")],
+    "Firefox": [r"C:\Program Files\Mozilla Firefox\firefox.exe", r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe"],
 }
+WIN_EXES = {"Google Chrome": "chrome.exe", "Microsoft Edge": "msedge.exe", "Brave Browser": "brave.exe", "Firefox": "firefox.exe"}
+
+
+def win_browser_exe(name: str) -> str | None:
+    """The browser's executable: a known install path, else its App Paths registry entry."""
+    found = next((p for p in WIN_BROWSERS.get(name, []) if p and os.path.exists(p)), None)
+    if found or name not in WIN_EXES:
+        return found
+    import winreg
+
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, rf"Software\Microsoft\Windows\CurrentVersion\App Paths\{WIN_EXES[name]}") as k:
+                path = str(winreg.QueryValue(k, None)).strip('"')
+        except OSError:
+            continue
+        if os.path.exists(path):
+            return path
+    return None
 
 
 def installed_browsers() -> list[str]:
@@ -24,7 +47,7 @@ def installed_browsers() -> list[str]:
                 out.append(b)
         return out
     if IS_WINDOWS:
-        return [name for name, paths in WIN_BROWSERS.items() if any(os.path.exists(p) for p in paths)]
+        return [name for name in WIN_BROWSERS if win_browser_exe(name)]
     return [b for b in ("google-chrome", "chromium", "firefox") if shutil.which(b)]
 
 
@@ -49,7 +72,7 @@ def open_url(url: str, browser: str) -> None:
         subprocess.run(args, check=True, timeout=20)
         return
     if IS_WINDOWS:
-        exe = next((p for p in WIN_BROWSERS.get(browser, []) if os.path.exists(p)), None)
+        exe = win_browser_exe(browser) if browser else None
         if exe:
             subprocess.Popen([exe, url])
         else:

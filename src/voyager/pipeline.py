@@ -340,7 +340,12 @@ class Pipeline:
             if info.obs is not None:
                 obs = info.obs
             if g is not None:
-                return g, info, obs, answers, mapping, ""
+                el = obs.tree.get(g.index) if g.kind == "element" and g.index is not None else None
+                if not identity_mismatch(step.target or "", obs.tree, el):
+                    return g, info, obs, answers, mapping, ""
+                # A pick that does not show what the target names means the item is not listed yet.
+                self._log("find_pick_mismatch", step=i, picked=g.label)
+                self.lookahead.pop(i, None)
             if scrolls >= step.max_scrolls:
                 return None, info, obs, answers, mapping, f"not found after {scrolls} scrolls"
             policy.kill.check()

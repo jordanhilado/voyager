@@ -26,7 +26,7 @@ class Brief(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> "Brief":
-        data = yaml.safe_load(path.read_text()) or {}
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         data.setdefault("name", path.stem)
         return cls(**data)
 
